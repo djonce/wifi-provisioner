@@ -1,0 +1,21 @@
+[Unit]
+Description=WiFi provisioning hotspot + captive portal
+Documentation=https://github.com/your-org/wifi-provisioner
+# Start after the network stack / NetworkManager are available. The unit still
+# works on systems without NetworkManager (the After= is simply ignored there).
+After=network.target NetworkManager.service
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wifi-provisioner --config /etc/wifi-provisioner/config.json
+# Must be root: manages the WiFi radio and binds privileged ports 53/67/80.
+User=root
+Restart=on-failure
+RestartSec=5
+# Keep the journal readable.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

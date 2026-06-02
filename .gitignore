@@ -1,0 +1,4 @@
+/bin/
+*.out
+.gocache/
+.DS_Store

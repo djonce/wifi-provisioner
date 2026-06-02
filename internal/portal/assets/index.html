@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>设备 Wi-Fi 配网</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --fg:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --ok:#22c55e; --err:#ef4444; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+         background:var(--bg); color:var(--fg); min-height:100vh; display:flex; justify-content:center; }
+  .wrap { width:100%; max-width:480px; padding:24px 18px 48px; }
+  h1 { font-size:20px; margin:8px 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .card { background:var(--card); border-radius:14px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 6px; }
+  input, select { width:100%; padding:12px; border-radius:10px; border:1px solid #334155;
+                  background:#0b1220; color:var(--fg); font-size:16px; }
+  .net { display:flex; align-items:center; justify-content:space-between; padding:12px 10px;
+         border-radius:10px; cursor:pointer; }
+  .net:active { background:#0b1220; }
+  .net.sel { background:#0b1220; outline:1px solid var(--accent); }
+  .net .name { font-size:15px; }
+  .net .meta { font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; }
+  .bars { font-size:12px; color:var(--accent); }
+  button { width:100%; padding:14px; border:0; border-radius:12px; background:var(--accent);
+           color:#03263a; font-size:16px; font-weight:600; margin-top:18px; }
+  button:disabled { opacity:.5; }
+  .row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .row input[type=checkbox] { width:auto; }
+  .msg { padding:12px 14px; border-radius:10px; font-size:14px; margin-top:14px; display:none; }
+  .msg.show { display:block; }
+  .msg.info { background:#0b3a4a; color:#bae6fd; }
+  .msg.ok { background:#0d3b22; color:#bbf7d0; }
+  .msg.err { background:#3b0d0d; color:#fecaca; }
+  .small { font-size:12px; color:var(--muted); margin-top:6px; }
+  .refresh { background:none; color:var(--accent); width:auto; padding:6px 0; margin:0; font-size:13px; }
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid #ffffff55; border-top-color:#fff;
+          border-radius:50%; animation:s .8s linear infinite; vertical-align:-2px; margin-right:6px; }
+  @keyframes s { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>设备 Wi-Fi 配网</h1>
+  <div class="sub">选择一个 Wi-Fi 网络并输入密码，设备将连接到它。</div>
+
+  <div class="card" id="listCard">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong style="font-size:14px">附近的网络</strong>
+      <button class="refresh" id="refreshBtn" type="button">↻ 刷新列表</button>
+    </div>
+    <div id="list"><div class="small" id="listHint">正在加载…</div></div>
+  </div>
+
+  <div class="card">
+    <label for="ssid">网络名称 (SSID)</label>
+    <input id="ssid" type="text" placeholder="点击上方网络或手动输入" autocomplete="off" autocapitalize="off">
+    <label for="pwd">密码</label>
+    <input id="pwd" type="password" placeholder="开放网络可留空" autocomplete="off">
+    <div class="row"><input id="showpwd" type="checkbox"><label for="showpwd" style="margin:0">显示密码</label></div>
+    <button id="connectBtn" type="button">连接</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="small">提示：点击「连接」后，此配网热点会暂时关闭。若连接失败，热点会重新出现，请重新连接它再试一次。</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let selected = null;
+
+function bars(sig){ const n = Math.max(1, Math.min(4, Math.round(sig/25))); return "▂▄▆█".slice(0,n) + "·".repeat(4-n); }
+
+async function loadNetworks(){
+  const hint = $("#listHint");
+  try {
+    const r = await fetch("/api/networks", {cache:"no-store"});
+    const nets = await r.json();
+    const list = $("#list");
+    list.innerHTML = "";
+    if(!nets || nets.length === 0){
+      list.innerHTML = '<div class="small">未发现网络，可手动输入名称。</div>';
+      return;
+    }
+    nets.forEach(n => {
+      const div = document.createElement("div");
+      div.className = "net";
+      div.innerHTML = `<span class="name">${escapeHtml(n.ssid)}</span>
+        <span class="meta">${n.secure ? "🔒" : "开放"} <span class="bars">${bars(n.signal)}</span></span>`;
+      div.onclick = () => {
+        document.querySelectorAll(".net").forEach(e=>e.classList.remove("sel"));
+        div.classList.add("sel");
+        selected = n;
+        $("#ssid").value = n.ssid;
+        $("#pwd").focus();
+      };
+      list.appendChild(div);
+    });
+  } catch(e){
+    hint.textContent = "加载失败，请下拉刷新。";
+  }
+}
+
+function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function showMsg(kind, html){ const m=$("#msg"); m.className="msg show "+kind; m.innerHTML=html; }
+
+let polling = false;
+async function pollStatus(){
+  if(polling) return; polling = true;
+  const tick = async () => {
+    try {
+      const r = await fetch("/api/status",{cache:"no-store"});
+      const s = await r.json();
+      if(s.state === "connected"){
+        showMsg("ok", "✅ 已成功连接到 <b>"+escapeHtml(s.ssid||"")+"</b>。设备已联网，可以关闭此页面。");
+        $("#connectBtn").disabled = true;
+        polling = false; return;
+      }
+      if(s.state === "failed"){
+        showMsg("err", "❌ 连接失败：" + escapeHtml(s.message||"请检查密码后重试。"));
+        $("#connectBtn").disabled = false;
+        polling = false; return;
+      }
+      if(s.state === "connecting"){
+        showMsg("info", '<span class="spin"></span>正在连接 <b>'+escapeHtml(s.ssid||"")+'</b>… 热点可能暂时断开，请稍候。');
+      }
+    } catch(e){ /* hotspot likely down during switch; keep trying */ }
+    setTimeout(tick, 2000);
+  };
+  tick();
+}
+
+$("#showpwd").onchange = e => { $("#pwd").type = e.target.checked ? "text" : "password"; };
+$("#refreshBtn").onclick = () => { $("#listHint") && ($("#listHint").textContent="正在刷新…"); loadNetworks(); };
+
+$("#connectBtn").onclick = async () => {
+  const ssid = $("#ssid").value.trim();
+  const password = $("#pwd").value;
+  if(!ssid){ showMsg("err","请先选择或输入网络名称。"); return; }
+  $("#connectBtn").disabled = true;
+  showMsg("info", '<span class="spin"></span>正在提交…');
+  try {
+    await fetch("/api/connect", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ssid, password})
+    });
+    showMsg("info", '<span class="spin"></span>已提交，正在连接 <b>'+escapeHtml(ssid)+'</b>…');
+    pollStatus();
+  } catch(e){
+    showMsg("err","提交失败，请重试。");
+    $("#connectBtn").disabled = false;
+  }
+};
+
+loadNetworks();
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "iface": "",
+  "ap_ssid": "",
+  "ap_password": "",
+  "ap_address": "192.168.4.1",
+  "ap_prefix": 24,
+
+  "dhcp_start": "192.168.4.50",
+  "dhcp_end": "192.168.4.150",
+  "lease_minutes": 10,
+
+  "web_port": 80,
+
+  "provision_timeout_min": 0,
+  "connect_timeout_sec": 45,
+  "online_timeout_sec": 5,
+  "check_interval_sec": 30,
+
+  "connectivity_urls": [
+    "http://connectivitycheck.gstatic.com/generate_204",
+    "http://connect.rom.miui.com/generate_204",
+    "http://wifi.vivo.com.cn/generate_204"
+  ],
+
+  "state_dir": "/var/lib/wifi-provisioner",
+  "sentinel_file": "/var/lib/wifi-provisioner/reconfigure",
+
+  "gpio_chip": "",
+  "gpio_line": 0,
+  "gpio_active_low": true,
+  "gpio_hold_sec": 3,
+
+  "debug": false
+}
