@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="wifi-provisioner 是面向无头 Linux 设备的开源 Wi-Fi 配网工具：自动开启热点、内置 DHCP/DNS 强制门户，用手机完成首次联网。">
+    <meta name="theme-color" content="#123136">
+    <meta property="og:title" content="wifi-provisioner">
+    <meta property="og:description" content="无头 Linux 设备的 Wi-Fi 配网工具。开机没网时自动开热点，用手机门户完成联网。">
+    <meta property="og:image" content="assets/hero.png">
+    <title>wifi-provisioner | 无头 Linux 设备 Wi-Fi 配网</title>
+    <link rel="preload" as="image" href="assets/hero.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="wifi-provisioner 首页">
+        <span class="brand-mark" aria-hidden="true">wp</span>
+        <span>wifi-provisioner</span>
+      </a>
+      <nav class="nav-links" aria-label="主要导航">
+        <a href="#flow">工作流</a>
+        <a href="#fit">特性</a>
+        <a href="#install">安装</a>
+        <a href="#config">配置</a>
+        <a href="#ops">排障</a>
+      </nav>
+      <a class="header-action" href="https://github.com/djonce/wifi-provisioner" target="_blank" rel="noreferrer">
+        <i data-lucide="github" aria-hidden="true"></i>
+        <span>GitHub</span>
+      </a>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-inner">
+          <p class="eyebrow">Open-source Wi-Fi provisioning for headless Linux</p>
+          <h1 id="hero-title">wifi-provisioner</h1>
+          <p class="hero-copy">
+            开机没网时自动开启配置热点和强制门户。用户用手机选择目标 Wi-Fi、填写密码，
+            设备就会切回 station 模式、校验联网并收起热点。
+          </p>
+          <div class="hero-actions" aria-label="主要操作">
+            <a class="button primary" href="#install">
+              <i data-lucide="terminal" aria-hidden="true"></i>
+              <span>查看安装</span>
+            </a>
+            <a class="button secondary" href="https://github.com/djonce/wifi-provisioner" target="_blank" rel="noreferrer">
+              <i data-lucide="github" aria-hidden="true"></i>
+              <span>查看源码</span>
+            </a>
+          </div>
+          <dl class="hero-facts" aria-label="项目要点">
+            <div>
+              <dt>单二进制</dt>
+              <dd>静态 Go 程序</dd>
+            </div>
+            <div>
+              <dt>内置门户</dt>
+              <dd>DHCP + DNS 劫持</dd>
+            </div>
+            <div>
+              <dt>双后端</dt>
+              <dd>nmcli / hostapd</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section intro-strip" aria-label="适用场景">
+        <div class="section-inner strip-grid">
+          <div>
+            <span class="section-kicker">Designed for boards, gateways, appliances</span>
+            <h2>给没有屏幕、键盘和预置网络的 Linux 设备一个可靠入口。</h2>
+          </div>
+          <p>
+            它最初为 Radxa Cubie A7Z 这类 ARM64 Debian 设备设计，也适合任意支持 AP 模式的
+            Debian / Ubuntu 网关、边缘盒子和自制硬件。
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="flow" aria-labelledby="flow-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <span class="section-kicker">Boot-time flow</span>
+            <h2 id="flow-title">从离线到上线，状态机自己收尾。</h2>
+            <p>服务常驻 systemd，只有设备确实未联网或收到重新配网触发时才介入。</p>
+          </div>
+          <div class="flow-grid" aria-label="配网流程">
+            <article class="flow-card">
+              <span>01</span>
+              <h3>检测联网</h3>
+              <p>先探测 `generate_204`，再用 TCP 拨测兜底；在线时保持待命。</p>
+            </article>
+            <article class="flow-card">
+              <span>02</span>
+              <h3>开启热点</h3>
+              <p>未联网时广播 `CubieSetup-XXXX`，SSID 可按配置覆盖。</p>
+            </article>
+            <article class="flow-card">
+              <span>03</span>
+              <h3>弹出门户</h3>
+              <p>纯 Go DHCP + DNS，把手机导向内置的配网页。</p>
+            </article>
+            <article class="flow-card">
+              <span>04</span>
+              <h3>提交 Wi-Fi</h3>
+              <p>手机端选择 SSID、填写密码，门户实时返回连接进度。</p>
+            </article>
+            <article class="flow-card">
+              <span>05</span>
+              <h3>切回 station</h3>
+              <p>单射频设备先关闭 AP，再连接目标网络并等待地址获取。</p>
+            </article>
+            <article class="flow-card">
+              <span>06</span>
+              <h3>成功待命</h3>
+              <p>联网成功后收起热点；失败时热点重新出现，方便重试。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section feature-band" id="fit" aria-labelledby="fit-title">
+        <div class="section-inner">
+          <div class="section-heading compact">
+            <span class="section-kicker">Why this project</span>
+            <h2 id="fit-title">小工具，但把现场问题想完整。</h2>
+          </div>
+          <div class="feature-layout">
+            <article class="feature-card highlight">
+              <i data-lucide="wifi" aria-hidden="true"></i>
+              <h3>不依赖 dnsmasq</h3>
+              <p>DHCP、DNS 劫持和门户网页都内置在二进制里，部署面更小。</p>
+            </article>
+            <article class="feature-card">
+              <i data-lucide="network" aria-hidden="true"></i>
+              <h3>自动适配网络栈</h3>
+              <p>有 NetworkManager 时走 `nmcli`，没有时回退到 `hostapd + wpa_supplicant`。</p>
+            </article>
+            <article class="feature-card">
+              <i data-lucide="shield-check" aria-hidden="true"></i>
+              <h3>门户绑定热点网卡</h3>
+              <p>Linux 下通过 `SO_BINDTODEVICE` 限制服务只在配网子网可见。</p>
+            </article>
+            <article class="feature-card">
+              <i data-lucide="rotate-ccw" aria-hidden="true"></i>
+              <h3>重新配网可触发</h3>
+              <p>支持哨兵文件和 GPIO 长按触发，设备上线后也能回到配网模式。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="matrix-title">
+        <div class="section-inner split">
+          <div class="section-heading inline">
+            <span class="section-kicker">Compatibility</span>
+            <h2 id="matrix-title">重点只看一件事：网卡是否支持 AP 模式。</h2>
+            <p>
+              目标系统可以是 Debian 11+ 或 Ubuntu；Radxa Cubie A7Z 是首个目标板，
+              但代码不绑定具体硬件。
+            </p>
+          </div>
+          <div class="matrix" role="table" aria-label="兼容性矩阵">
+            <div role="row" class="matrix-head">
+              <span role="columnheader">环境</span>
+              <span role="columnheader">依赖</span>
+              <span role="columnheader">后端</span>
+            </div>
+            <div role="row">
+              <span role="cell">NetworkManager</span>
+              <span role="cell">`nmcli`</span>
+              <span role="cell">自动创建热点和连接配置</span>
+            </div>
+            <div role="row">
+              <span role="cell">裸 wpa 环境</span>
+              <span role="cell">`hostapd`、`wpa_supplicant`、`iw`、DHCP client</span>
+              <span role="cell">生成临时配置并切换模式</span>
+            </div>
+            <div role="row">
+              <span role="cell">触发重配</span>
+              <span role="cell">哨兵文件，或可选 `gpiod`</span>
+              <span role="cell">设备在线后重新进入门户</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section install-section" id="install" aria-labelledby="install-title">
+        <div class="section-inner install-grid">
+          <div class="section-heading inline">
+            <span class="section-kicker">Install</span>
+            <h2 id="install-title">复制到板子上，安装为 systemd 服务。</h2>
+            <p>
+              仓库附带安装脚本。自行编译时使用 Go 1.21+，默认交叉编译 Linux ARM64 静态二进制。
+            </p>
+          </div>
+
+          <div class="terminal-panel">
+            <div class="terminal-toolbar">
+              <div class="terminal-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="command-tabs" role="tablist" aria-label="安装命令">
+                <button class="tab-button active" type="button" role="tab" aria-selected="true" data-tab="install">安装</button>
+                <button class="tab-button" type="button" role="tab" aria-selected="false" data-tab="build">编译</button>
+                <button class="tab-button" type="button" role="tab" aria-selected="false" data-tab="check">验证 AP</button>
+              </div>
+              <button class="icon-button" type="button" data-copy aria-label="复制当前命令">
+                <i data-lucide="copy" aria-hidden="true"></i>
+              </button>
+            </div>
+            <pre class="command-block active" data-panel="install"><code>sudo ./install.sh
+sudo systemctl start wifi-provisioner
+journalctl -u wifi-provisioner -f</code></pre>
+            <pre class="command-block" data-panel="build"><code>make build
+scp bin/wifi-provisioner root@device:/usr/local/bin/
+sudo systemctl restart wifi-provisioner</code></pre>
+            <pre class="command-block" data-panel="check"><code>iw list | sed -n '/Supported interface modes/,/Band/p'
+# 输出中必须出现：* AP</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="config" aria-labelledby="config-title">
+        <div class="section-inner config-grid">
+          <div class="section-heading inline">
+            <span class="section-kicker">Configuration</span>
+            <h2 id="config-title">默认即用，关键行为都能改。</h2>
+            <p>
+              配置文件位于 `/etc/wifi-provisioner/config.json`。空值会回落到内置默认值，
+              现场部署时通常只需要设置网卡名、热点密码和重新配网触发。
+            </p>
+          </div>
+          <div class="config-list" aria-label="常用配置项">
+            <article>
+              <strong>`iface`</strong>
+              <span>留空自动寻找第一个无线网卡。</span>
+            </article>
+            <article>
+              <strong>`ap_password`</strong>
+              <span>默认开放热点；设为 8 位以上启用 WPA2。</span>
+            </article>
+            <article>
+              <strong>`connectivity_urls`</strong>
+              <span>可替换为内网或国内更稳定的联网探测地址。</span>
+            </article>
+            <article>
+              <strong>`sentinel_file`</strong>
+              <span>`touch` 该文件即可让已联网设备重新配网。</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section ops-band" id="ops" aria-labelledby="ops-title">
+        <div class="section-inner">
+          <div class="section-heading compact">
+            <span class="section-kicker">Operations</span>
+            <h2 id="ops-title">现场排障有明确路径。</h2>
+          </div>
+          <div class="ops-grid">
+            <article>
+              <i data-lucide="radio-tower" aria-hidden="true"></i>
+              <h3>热点不开</h3>
+              <p>先看 `iw list` 是否有 `* AP`，再跟 `journalctl -u wifi-provisioner -f`。</p>
+            </article>
+            <article>
+              <i data-lucide="globe-2" aria-hidden="true"></i>
+              <h3>门户不弹</h3>
+              <p>手机浏览器直接打开 `http://192.168.4.1`，手动入口始终保留。</p>
+            </article>
+            <article>
+              <i data-lucide="key-round" aria-hidden="true"></i>
+              <h3>连接失败</h3>
+              <p>多半是密码或 DHCP 客户端问题；热点会重新出现，重连即可重试。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <span>wifi-provisioner</span>
+        <a href="https://github.com/djonce/wifi-provisioner" target="_blank" rel="noreferrer">GitHub 仓库</a>
+      </div>
+    </footer>
+
+    <script src="vendor/lucide.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
