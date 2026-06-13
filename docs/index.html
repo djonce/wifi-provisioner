@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <div class="scroll-progress" data-progress aria-hidden="true"></div>
     <header class="site-header" data-header>
       <a class="brand" href="#top" aria-label="wifi-provisioner 首页">
         <span class="brand-mark" aria-hidden="true">wp</span>
@@ -33,38 +34,64 @@
 
     <main id="top">
       <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-media" data-parallax aria-hidden="true"></div>
         <div class="hero-inner">
-          <p class="eyebrow">Open-source Wi-Fi provisioning for headless Linux</p>
-          <h1 id="hero-title">wifi-provisioner</h1>
-          <p class="hero-copy">
-            开机没网时自动开启配置热点和强制门户。用户用手机选择目标 Wi-Fi、填写密码，
-            设备就会切回 station 模式、校验联网并收起热点。
-          </p>
-          <div class="hero-actions" aria-label="主要操作">
-            <a class="button primary" href="#install">
-              <i data-lucide="terminal" aria-hidden="true"></i>
-              <span>查看安装</span>
-            </a>
-            <a class="button secondary" href="https://github.com/djonce/wifi-provisioner" target="_blank" rel="noreferrer">
-              <i data-lucide="github" aria-hidden="true"></i>
-              <span>查看源码</span>
-            </a>
+          <div class="hero-content" data-reveal>
+            <p class="eyebrow">Open-source Wi-Fi provisioning for headless Linux</p>
+            <h1 id="hero-title">wifi-provisioner</h1>
+            <p class="hero-copy">
+              开机没网时自动开启配置热点和强制门户。用户用手机选择目标 Wi-Fi、填写密码，
+              设备就会切回 station 模式、校验联网并收起热点。
+            </p>
+            <div class="hero-actions" aria-label="主要操作">
+              <a class="button primary" href="#install">
+                <i data-lucide="terminal" aria-hidden="true"></i>
+                <span>查看安装</span>
+              </a>
+              <a class="button secondary" href="https://github.com/djonce/wifi-provisioner" target="_blank" rel="noreferrer">
+                <i data-lucide="github" aria-hidden="true"></i>
+                <span>查看源码</span>
+              </a>
+            </div>
+            <dl class="hero-facts" aria-label="项目要点">
+              <div>
+                <dt>单二进制</dt>
+                <dd>静态 Go 程序</dd>
+              </div>
+              <div>
+                <dt>内置门户</dt>
+                <dd>DHCP + DNS 劫持</dd>
+              </div>
+              <div>
+                <dt>双后端</dt>
+                <dd>nmcli / hostapd</dd>
+              </div>
+            </dl>
           </div>
-          <dl class="hero-facts" aria-label="项目要点">
-            <div>
-              <dt>单二进制</dt>
-              <dd>静态 Go 程序</dd>
+          <aside class="hero-runtime" data-reveal aria-label="配网运行状态">
+            <div class="runtime-topline">
+              <span class="live-dot" aria-hidden="true"></span>
+              <span>runtime state machine</span>
             </div>
-            <div>
-              <dt>内置门户</dt>
-              <dd>DHCP + DNS 劫持</dd>
-            </div>
-            <div>
-              <dt>双后端</dt>
-              <dd>nmcli / hostapd</dd>
-            </div>
-          </dl>
+            <ol>
+              <li>
+                <strong>offline detected</strong>
+                <span>probe generate_204 + TCP fallback</span>
+              </li>
+              <li>
+                <strong>hotspot online</strong>
+                <span>CubieSetup-XXXX / 192.168.4.1</span>
+              </li>
+              <li>
+                <strong>portal serving</strong>
+                <span>DHCP, DNS, embedded web UI</span>
+              </li>
+              <li>
+                <strong>station verified</strong>
+                <span>AP closed after network check</span>
+              </li>
+            </ol>
+          </aside>
         </div>
       </section>
 
@@ -83,38 +110,38 @@
 
       <section class="section" id="flow" aria-labelledby="flow-title">
         <div class="section-inner">
-          <div class="section-heading">
+          <div class="section-heading" data-reveal>
             <span class="section-kicker">Boot-time flow</span>
             <h2 id="flow-title">从离线到上线，状态机自己收尾。</h2>
             <p>服务常驻 systemd，只有设备确实未联网或收到重新配网触发时才介入。</p>
           </div>
           <div class="flow-grid" aria-label="配网流程">
-            <article class="flow-card">
+            <article class="flow-card" data-reveal>
               <span>01</span>
               <h3>检测联网</h3>
               <p>先探测 `generate_204`，再用 TCP 拨测兜底；在线时保持待命。</p>
             </article>
-            <article class="flow-card">
+            <article class="flow-card" data-reveal>
               <span>02</span>
               <h3>开启热点</h3>
               <p>未联网时广播 `CubieSetup-XXXX`，SSID 可按配置覆盖。</p>
             </article>
-            <article class="flow-card">
+            <article class="flow-card" data-reveal>
               <span>03</span>
               <h3>弹出门户</h3>
               <p>纯 Go DHCP + DNS，把手机导向内置的配网页。</p>
             </article>
-            <article class="flow-card">
+            <article class="flow-card" data-reveal>
               <span>04</span>
               <h3>提交 Wi-Fi</h3>
               <p>手机端选择 SSID、填写密码，门户实时返回连接进度。</p>
             </article>
-            <article class="flow-card">
+            <article class="flow-card" data-reveal>
               <span>05</span>
               <h3>切回 station</h3>
               <p>单射频设备先关闭 AP，再连接目标网络并等待地址获取。</p>
             </article>
-            <article class="flow-card">
+            <article class="flow-card" data-reveal>
               <span>06</span>
               <h3>成功待命</h3>
               <p>联网成功后收起热点；失败时热点重新出现，方便重试。</p>
@@ -125,27 +152,27 @@
 
       <section class="section feature-band" id="fit" aria-labelledby="fit-title">
         <div class="section-inner">
-          <div class="section-heading compact">
+          <div class="section-heading compact" data-reveal>
             <span class="section-kicker">Why this project</span>
             <h2 id="fit-title">小工具，但把现场问题想完整。</h2>
           </div>
           <div class="feature-layout">
-            <article class="feature-card highlight">
+            <article class="feature-card highlight" data-reveal>
               <i data-lucide="wifi" aria-hidden="true"></i>
               <h3>不依赖 dnsmasq</h3>
               <p>DHCP、DNS 劫持和门户网页都内置在二进制里，部署面更小。</p>
             </article>
-            <article class="feature-card">
+            <article class="feature-card" data-reveal>
               <i data-lucide="network" aria-hidden="true"></i>
               <h3>自动适配网络栈</h3>
               <p>有 NetworkManager 时走 `nmcli`，没有时回退到 `hostapd + wpa_supplicant`。</p>
             </article>
-            <article class="feature-card">
+            <article class="feature-card" data-reveal>
               <i data-lucide="shield-check" aria-hidden="true"></i>
               <h3>门户绑定热点网卡</h3>
               <p>Linux 下通过 `SO_BINDTODEVICE` 限制服务只在配网子网可见。</p>
             </article>
-            <article class="feature-card">
+            <article class="feature-card" data-reveal>
               <i data-lucide="rotate-ccw" aria-hidden="true"></i>
               <h3>重新配网可触发</h3>
               <p>支持哨兵文件和 GPIO 长按触发，设备上线后也能回到配网模式。</p>
@@ -156,7 +183,7 @@
 
       <section class="section" aria-labelledby="matrix-title">
         <div class="section-inner split">
-          <div class="section-heading inline">
+          <div class="section-heading inline" data-reveal>
             <span class="section-kicker">Compatibility</span>
             <h2 id="matrix-title">重点只看一件事：网卡是否支持 AP 模式。</h2>
             <p>
@@ -164,7 +191,7 @@
               但代码不绑定具体硬件。
             </p>
           </div>
-          <div class="matrix" role="table" aria-label="兼容性矩阵">
+          <div class="matrix" role="table" aria-label="兼容性矩阵" data-reveal>
             <div role="row" class="matrix-head">
               <span role="columnheader">环境</span>
               <span role="columnheader">依赖</span>
@@ -191,7 +218,7 @@
 
       <section class="section install-section" id="install" aria-labelledby="install-title">
         <div class="section-inner install-grid">
-          <div class="section-heading inline">
+          <div class="section-heading inline" data-reveal>
             <span class="section-kicker">Install</span>
             <h2 id="install-title">复制到板子上，安装为 systemd 服务。</h2>
             <p>
@@ -199,7 +226,7 @@
             </p>
           </div>
 
-          <div class="terminal-panel">
+          <div class="terminal-panel" data-reveal>
             <div class="terminal-toolbar">
               <div class="terminal-dots" aria-hidden="true">
                 <span></span><span></span><span></span>
@@ -227,7 +254,7 @@ sudo systemctl restart wifi-provisioner</code></pre>
 
       <section class="section" id="config" aria-labelledby="config-title">
         <div class="section-inner config-grid">
-          <div class="section-heading inline">
+          <div class="section-heading inline" data-reveal>
             <span class="section-kicker">Configuration</span>
             <h2 id="config-title">默认即用，关键行为都能改。</h2>
             <p>
@@ -236,19 +263,19 @@ sudo systemctl restart wifi-provisioner</code></pre>
             </p>
           </div>
           <div class="config-list" aria-label="常用配置项">
-            <article>
+            <article data-reveal>
               <strong>`iface`</strong>
               <span>留空自动寻找第一个无线网卡。</span>
             </article>
-            <article>
+            <article data-reveal>
               <strong>`ap_password`</strong>
               <span>默认开放热点；设为 8 位以上启用 WPA2。</span>
             </article>
-            <article>
+            <article data-reveal>
               <strong>`connectivity_urls`</strong>
               <span>可替换为内网或国内更稳定的联网探测地址。</span>
             </article>
-            <article>
+            <article data-reveal>
               <strong>`sentinel_file`</strong>
               <span>`touch` 该文件即可让已联网设备重新配网。</span>
             </article>
@@ -258,22 +285,22 @@ sudo systemctl restart wifi-provisioner</code></pre>
 
       <section class="section ops-band" id="ops" aria-labelledby="ops-title">
         <div class="section-inner">
-          <div class="section-heading compact">
+          <div class="section-heading compact" data-reveal>
             <span class="section-kicker">Operations</span>
             <h2 id="ops-title">现场排障有明确路径。</h2>
           </div>
           <div class="ops-grid">
-            <article>
+            <article data-reveal>
               <i data-lucide="radio-tower" aria-hidden="true"></i>
               <h3>热点不开</h3>
               <p>先看 `iw list` 是否有 `* AP`，再跟 `journalctl -u wifi-provisioner -f`。</p>
             </article>
-            <article>
+            <article data-reveal>
               <i data-lucide="globe-2" aria-hidden="true"></i>
               <h3>门户不弹</h3>
               <p>手机浏览器直接打开 `http://192.168.4.1`，手动入口始终保留。</p>
             </article>
-            <article>
+            <article data-reveal>
               <i data-lucide="key-round" aria-hidden="true"></i>
               <h3>连接失败</h3>
               <p>多半是密码或 DHCP 客户端问题；热点会重新出现，重连即可重试。</p>

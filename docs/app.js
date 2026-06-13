@@ -3,6 +3,12 @@ const navLinks = Array.from(document.querySelectorAll(".nav-links a"));
 const tabButtons = Array.from(document.querySelectorAll("[data-tab]"));
 const commandPanels = Array.from(document.querySelectorAll("[data-panel]"));
 const copyButton = document.querySelector("[data-copy]");
+const progress = document.querySelector("[data-progress]");
+const parallaxLayer = document.querySelector("[data-parallax]");
+const revealItems = Array.from(document.querySelectorAll("[data-reveal]"));
+
+let lastScrollY = window.scrollY;
+let ticking = false;
 
 function renderIcons() {
   if (window.lucide) {
@@ -12,7 +18,33 @@ function renderIcons() {
 
 function setHeaderState() {
   if (!header) return;
-  header.classList.toggle("is-scrolled", window.scrollY > 24);
+  const currentY = window.scrollY;
+  header.classList.toggle("is-scrolled", currentY > 24);
+  header.classList.toggle("is-hidden", currentY > 180 && currentY > lastScrollY + 6);
+  lastScrollY = currentY;
+}
+
+function updateProgress() {
+  if (!progress) return;
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  const ratio = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+  progress.style.setProperty("--progress", String(Math.min(1, Math.max(0, ratio))));
+}
+
+function updateParallax() {
+  if (!parallaxLayer) return;
+  parallaxLayer.style.setProperty("--hero-shift", String(Math.min(window.scrollY, 900)));
+}
+
+function onScroll() {
+  if (ticking) return;
+  ticking = true;
+  window.requestAnimationFrame(() => {
+    setHeaderState();
+    updateProgress();
+    updateParallax();
+    ticking = false;
+  });
 }
 
 function setActiveTab(name) {
@@ -86,6 +118,35 @@ function setupNavObserver() {
   targets.forEach((target) => observer.observe(target));
 }
 
+function setupRevealObserver() {
+  if (!revealItems.length) return;
+
+  revealItems.forEach((item, index) => {
+    item.style.setProperty("--reveal-delay", `${Math.min(index % 6, 5) * 55}ms`);
+  });
+
+  if (!("IntersectionObserver" in window)) {
+    revealItems.forEach((item) => item.classList.add("is-visible"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    {
+      rootMargin: "0px 0px -12% 0px",
+      threshold: 0.12,
+    },
+  );
+
+  revealItems.forEach((item) => observer.observe(item));
+}
+
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveTab(button.dataset.tab));
 });
@@ -94,9 +155,19 @@ if (copyButton) {
   copyButton.addEventListener("click", copyCurrentCommand);
 }
 
-window.addEventListener("scroll", setHeaderState, { passive: true });
-window.addEventListener("load", () => {
+function init() {
+  document.body.classList.add("reveal-ready");
   renderIcons();
   setHeaderState();
+  updateProgress();
+  updateParallax();
   setupNavObserver();
-});
+  setupRevealObserver();
+}
+
+window.addEventListener("scroll", onScroll, { passive: true });
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init, { once: true });
+} else {
+  init();
+}
